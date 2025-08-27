@@ -86,10 +86,11 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
         <div className="col-span-8 flex flex-col">
           {scores.slice(0, 3).map((score, index) => (
             <div className="flex justify-start items-start py-8" key={score.id}>
-              <div className="text-[150px] uppercase font-bold text-white leading-none">{score.name}</div>
+              <div className="text-[150px] uppercase font-bold text-white leading-none">{score.score.toLocaleString()}</div>  
+               <span className="text-[18px] font-bold uppercase text-white/60">pts</span>
               <div className="mt-7">
-                <span className="text-[18px] font-bold uppercase text-white/60">{score.score.toLocaleString()}</span>
-                <span className="text-[18px] font-bold uppercase text-white/60">pts</span>
+                <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
+            
               </div>
             </div>
           ))}
@@ -101,8 +102,10 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
             {scores.slice(3).map((score, index) => (
               <div className="flex items-center gap-4" key={score.id}>
                 <div className="text-[32px] font-bold text-white leading-none">{score.score.toLocaleString()}</div>
+                <span className="text-[32px] font-bold uppercase text-white">pts</span>
                 <div>
-                  <span className="text-[14px] font-bold uppercase text-white/60">{score.name}</span>
+                  <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
+              
                 </div>
               </div>
             ))}
