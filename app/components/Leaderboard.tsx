@@ -63,7 +63,6 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-600 text-lg mb-4">
-          The leaderboard is empty. Be the first to add a score!
         </div>
         <a
           href="/admin"
@@ -76,20 +75,21 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   }
 
   return (
-    <div className="overflow-x-auto flex flex-col justify-center items-center">
+    <div className=" flex flex-col justify-center items-center">
    
 
-      <div className="grid grid-cols-12 gap-8 border-t border-white/20 w-full h-[90vh] border-b">
 
-<h1 className="text-white text-4xl font-bold">KTH x UMAIN</h1>
+      <div className="grid grid-cols-12 gap-8 border-t border-white/20 w-full h-[90vh]">
+      <h1 className="text-white/60 text-4xl font-bold w-full col-span-12 pt-8">KTH x UMAIN</h1>
 
         {/* Top 3 Scores */}
         <div className="col-span-8 flex flex-col">
           {scores.slice(0, 3).map((score, index) => (
             <div className="flex justify-start items-start py-8" key={score.id}>
-              <div className="text-[200px] font-bold text-white leading-none">{score.score.toLocaleString()}</div>
+              <div className="text-[150px] uppercase font-bold text-white leading-none">{score.name}</div>
               <div className="mt-7">
-                <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
+                <span className="text-[18px] font-bold uppercase text-white/60">{score.score.toLocaleString()}</span>
+                <span className="text-[18px] font-bold uppercase text-white/60">pts</span>
               </div>
             </div>
           ))}
@@ -97,7 +97,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
 
         {/* Rest of the Scores */}
         <div className="col-span-4 pl-8">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 pt-8">
             {scores.slice(3).map((score, index) => (
               <div className="flex items-center gap-4" key={score.id}>
                 <div className="text-[32px] font-bold text-white leading-none">{score.score.toLocaleString()}</div>
