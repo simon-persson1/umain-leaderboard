@@ -80,6 +80,9 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
    
 
       <div className="grid grid-cols-12 gap-8 border-t border-white/20 w-full h-[90vh] border-b">
+
+<h1 className="text-white text-4xl font-bold">KTH x UMAIN</h1>
+
         {/* Top 3 Scores */}
         <div className="col-span-8 flex flex-col">
           {scores.slice(0, 3).map((score, index) => (
@@ -93,7 +96,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
         </div>
 
         {/* Rest of the Scores */}
-        <div className="col-span-4 border-l border-white/20 pl-8">
+        <div className="col-span-4 pl-8">
           <div className="flex flex-col gap-6">
             {scores.slice(3).map((score, index) => (
               <div className="flex items-center gap-4" key={score.id}>
