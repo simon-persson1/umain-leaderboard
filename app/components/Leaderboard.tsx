@@ -14,11 +14,21 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
 
   useEffect(() => {
     fetchScores();
+    
+    // Auto-refresh every 3 seconds
+    const interval = setInterval(() => {
+      fetchScores(false); // Don't show loading spinner on auto-refresh
+    }, 3000);
+    
+    // Cleanup interval on component unmount
+    return () => {
+      clearInterval(interval);
+    };
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
-  const fetchScores = async () => {
+  const fetchScores = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError(null);
       
       const response = await fetch('/api/scores');
@@ -50,7 +60,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
       <div className="text-center py-12">
         <div className="text-red-600 mb-4">{error}</div>
         <button
-          onClick={fetchScores}
+          onClick={() => fetchScores()}
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
         >
           Try Again

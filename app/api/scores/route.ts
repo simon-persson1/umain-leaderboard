@@ -1,131 +1,103 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Score, LeaderboardResponse, AddScoreRequest, AddScoreResponse } from '@/app/types/leaderboard';
+import { prisma } from '@/app/utils/prisma';
 
-// Temporary in-memory storage for development (will be replaced by Vercel KV)
-let inMemoryScores: Score[] = [];
-let scoreCounter = 1;
-
-// Helper function to get scores (tries Vercel KV first, falls back to in-memory)
+// Helper function to get scores from database
 async function getScores(): Promise<Score[]> {
   try {
-    // Try to import and use Vercel KV
-    const { kv } = await import('@vercel/kv');
-    const scores = await kv.zrange('leaderboard', 0, -1, { withScores: true });
+    const scores = await prisma.score.findMany({
+      orderBy: {
+        score: 'desc'
+      }
+    });
     
-    // Transform the data from Redis sorted set format
-    const transformedScores: Score[] = scores.map((item: any, index: number) => ({
-      id: `score_${Date.now()}_${index}`,
-      name: item.member as string,
-      score: item.score as number,
-      createdAt: new Date()
+    // Transform Prisma result to match our Score interface
+    return scores.map(score => ({
+      id: score.id,
+      name: score.name,
+      score: score.score,
+      createdAt: score.createdAt
     }));
-
-    return transformedScores;
   } catch (error: any) {
-    console.log('Vercel KV not configured, using in-memory storage:', error.message);
-    return inMemoryScores;
+    console.error('Error fetching scores from database:', error);
+    throw error;
   }
 }
 
-// Helper function to add score (tries Vercel KV first, falls back to in-memory)
+// Helper function to add score to database
 async function addScore(name: string, score: number): Promise<Score> {
   try {
-    // Try to import and use Vercel KV
-    const { kv } = await import('@vercel/kv');
-    await kv.zadd('leaderboard', { score, member: name });
+    const newScore = await prisma.score.create({
+      data: {
+        name,
+        score
+      }
+    });
     
-    const newScore: Score = {
-      id: `score_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      score,
-      createdAt: new Date()
+    return {
+      id: newScore.id,
+      name: newScore.name,
+      score: newScore.score,
+      createdAt: newScore.createdAt
     };
-    
-    return newScore;
   } catch (error: any) {
-    console.log('Vercel KV not configured, using in-memory storage:', error.message);
-    
-    // Fallback to in-memory storage
-    const newScore: Score = {
-      id: `score_${Date.now()}_${scoreCounter++}`,
-      name,
-      score,
-      createdAt: new Date()
-    };
-    
-    inMemoryScores.push(newScore);
-    // Sort by score in descending order
-    inMemoryScores.sort((a, b) => b.score - a.score);
-    
-    return newScore;
+    console.error('Error adding score to database:', error);
+    throw error;
   }
 }
 
-// Helper function to clear all scores
+// Helper function to clear all scores from database
 async function clearAllScores(): Promise<void> {
   try {
-    // Try to import and use Vercel KV
-    const { kv } = await import('@vercel/kv');
-    await kv.del('leaderboard');
+    await prisma.score.deleteMany();
   } catch (error: any) {
-    console.log('Vercel KV not configured, using in-memory storage:', error.message);
-    // Fallback to in-memory storage
-    inMemoryScores = [];
+    console.error('Error clearing scores from database:', error);
+    throw error;
   }
 }
 
-// Helper function to update a score
+// Helper function to update a score in database
 async function updateScore(id: string, name: string, score: number): Promise<Score | null> {
   try {
-    // Try to import and use Vercel KV
-    const { kv } = await import('@vercel/kv');
-    // For Redis, we need to remove the old entry and add the new one
-    // Since we're using name as member, we'll need to handle this differently
-    // For now, we'll use the in-memory approach for editing
-    throw new Error('Editing not yet implemented for Vercel KV');
-  } catch (error: any) {
-    console.log('Vercel KV not configured, using in-memory storage:', error.message);
+    const updatedScore = await prisma.score.update({
+      where: { id },
+      data: {
+        name,
+        score,
+        createdAt: new Date() // Update timestamp on edit
+      }
+    });
     
-    // Fallback to in-memory storage
-    const scoreIndex = inMemoryScores.findIndex(s => s.id === id);
-    if (scoreIndex === -1) {
-      return null;
-    }
-    
-    const updatedScore: Score = {
-      ...inMemoryScores[scoreIndex],
-      name,
-      score,
-      createdAt: new Date()
+    return {
+      id: updatedScore.id,
+      name: updatedScore.name,
+      score: updatedScore.score,
+      createdAt: updatedScore.createdAt
     };
-    
-    inMemoryScores[scoreIndex] = updatedScore;
-    // Sort by score in descending order
-    inMemoryScores.sort((a, b) => b.score - a.score);
-    
-    return updatedScore;
+  } catch (error: any) {
+    console.error('Error updating score in database:', error);
+    // If the record doesn't exist, Prisma will throw an error
+    if (error.code === 'P2025') {
+      return null; // Record not found
+    }
+    throw error;
   }
 }
 
-// Helper function to delete a specific score
+// Helper function to delete a specific score from database
 async function deleteScore(id: string): Promise<boolean> {
   try {
-    // Try to import and use Vercel KV
-    const { kv } = await import('@vercel/kv');
-    // For Redis, we'd need to remove by member name
-    // For now, we'll use the in-memory approach
-    throw new Error('Deleting not yet implemented for Vercel KV');
-  } catch (error: any) {
-    console.log('Vercel KV not configured, using in-memory storage:', error.message);
-    
-    // Fallback to in-memory storage
-    const scoreIndex = inMemoryScores.findIndex(s => s.id === id);
-    if (scoreIndex === -1) {
-      return false;
-    }
-    
-    inMemoryScores.splice(scoreIndex, 1);
+    await prisma.score.delete({
+      where: { id }
+    });
     return true;
+  } catch (error: any) {
+    console.error('Error deleting score from database:', error);
+    // If the record doesn't exist, Prisma will throw an error
+    if (error.code === 'P2025') {
+      return false; // Record not found
+    }
+    throw error;
   }
 }
 
@@ -133,12 +105,9 @@ async function deleteScore(id: string): Promise<boolean> {
 export async function GET(): Promise<NextResponse<LeaderboardResponse>> {
   try {
     const scores = await getScores();
-    
-    // Sort by score in descending order
-    const sortedScores = scores.sort((a, b) => b.score - a.score);
 
     return NextResponse.json({
-      scores: sortedScores,
+      scores,
       success: true
     });
   } catch (error) {
