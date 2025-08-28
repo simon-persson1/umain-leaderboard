@@ -4,10 +4,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Score } from '@/app/types/leaderboard';
 import AnimatedScore from './AnimatedScore';
 import gsap from 'gsap';
-import { Flip } from 'gsap/Flip';
+import { Flip } from 'gsap/dist/Flip';
 import confetti from 'canvas-confetti';
 
-gsap.registerPlugin(Flip);
+// Register GSAP plugins only on the client side
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(Flip);
+}
 
 interface LeaderboardProps {
   refreshKey?: number;
