@@ -43,20 +43,7 @@ export default function AdminPage() {
             Manage your leaderboard scores
           </p>
           
-          {/* Debug info */}
-          <div className="bg-green-100 p-4 rounded-lg max-w-md mx-auto">
-            <p className="text-sm text-green-800">
-              <strong>Debug Info:</strong><br/>
-              Refresh Key: {refreshKey}<br/>
-              Events Dispatched: {eventCount}
-            </p>
-            <button
-              onClick={testEvent}
-              className="mt-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
-            >
-              Test Event
-            </button>
-          </div>
+         
         </div>
 
         {/* Tab Navigation */}
@@ -118,10 +105,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-12 text-gray-500">
-          <p>Admin Panel - Built with Next.js 14, TypeScript, and Tailwind CSS</p>
-        </div>
+      
       </div>
     </main>
   );

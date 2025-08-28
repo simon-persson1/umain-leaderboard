@@ -27,10 +27,6 @@ export default function ScoreForm({ onScoreAdded }: ScoreFormProps) {
       newErrors.score = 'Score must be a non-negative number';
     }
 
-    if (formData.score === 0 && formData.name.trim()) {
-      newErrors.score = 'Score must be greater than 0';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -105,7 +101,7 @@ export default function ScoreForm({ onScoreAdded }: ScoreFormProps) {
             name="name"
             value={formData.name}
             onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black ${
               errors.name ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="Enter your name"
@@ -127,7 +123,7 @@ export default function ScoreForm({ onScoreAdded }: ScoreFormProps) {
             value={formData.score}
             onChange={handleInputChange}
             min="0"
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black ${
               errors.score ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="Enter your score"

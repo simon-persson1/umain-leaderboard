@@ -133,7 +133,7 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Manage Scores</h3>
+        <h3 className="text-lg text-black font-semibold">Manage Scores</h3>
         <button
           onClick={clearAll}
           className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
@@ -171,16 +171,16 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
                       {index === 0 && <span className="text-yellow-500 text-xl mr-2"></span>}
                       {index === 1 && <span className="text-gray-400 text-xl mr-2"></span>}
                       {index === 2 && <span className="text-amber-600 text-xl mr-2"></span>}
-                      <span className="font-medium">#{index + 1}</span>
+                      <span className="font-medium text-black">#{index + 1}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-4  text-black">
                     {editingId === score.id ? (
                       <input
                         type="text"
                         value={editName}
                         onChange={(e) => setEditName(e.target.value)}
-                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 text-black"
                       />
                     ) : (
                       <span className="font-medium">{score.name}</span>
@@ -192,7 +192,7 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
                         type="number"
                         value={editScore}
                         onChange={(e) => setEditScore(parseInt(e.target.value) || 0)}
-                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-blue-500 text-black"
                         min="0"
                       />
                     ) : (

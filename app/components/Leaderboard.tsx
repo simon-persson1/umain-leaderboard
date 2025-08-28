@@ -174,14 +174,14 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
           {scores.slice(0, 3).map((score, index) => (
             <div className="flex flex-col py-8" key={score.id} data-flip-id={`score-${score.id}`}>
               <span className="text-[24px] font-bold uppercase text-white/60">{score.name}</span>
-              <div className="flex items-end">
-                <AnimatedScore 
-                  value={score.score} 
-                  className="score-value text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none"
-                  duration={1.5}
-                />
-                <span className="text-[18px] font-bold uppercase text-white mb-4">pts</span>
-              </div>
+                <div className="flex items-end">
+                  <AnimatedScore 
+                    value={score.score} 
+                    className="score-value text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none"
+                    duration={1.5}
+                  />
+                  <span className="text-[18px] font-bold uppercase text-white mb-4">pts</span>
+                </div>
             </div>
           ))}
         </div>
@@ -192,14 +192,14 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
             {scores.slice(3).map((score, index) => (
               <div className="flex flex-col" key={score.id} data-flip-id={`score-${score.id}`}>
                 <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
-                <div className="flex items-end gap-2">
-                                      <AnimatedScore 
+                  <div className="flex items-end gap-2">
+                    <AnimatedScore 
                       value={score.score}
                       className="score-value text-[32px] font-bold text-white leading-none"
                       duration={1.5}
                     />
-                  <span className="text-[12px] font-bold uppercase text-white">pts</span>
-                </div>
+                    <span className="text-[12px] font-bold uppercase text-white">pts</span>
+                  </div>
               </div>
             ))}
           </div>
