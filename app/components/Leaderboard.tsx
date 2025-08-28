@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { Score } from '@/app/types/leaderboard';
 import AnimatedScore from './AnimatedScore';
 import gsap from 'gsap';
@@ -21,6 +21,22 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastPositions = useRef<Map<string, number>>(new Map());
+  const contextRef = useRef<gsap.Context | null>(null);
+
+  // Create GSAP context
+  useLayoutEffect(() => {
+    // Create context
+    contextRef.current = gsap.context((self) => {
+      // Initial setup if needed
+    }, containerRef);
+
+    // Cleanup
+    return () => {
+      if (contextRef.current) {
+        contextRef.current.revert(); // This will also kill any animations
+      }
+    };
+  }, []); // Empty dependency array means this only runs once on mount
 
   useEffect(() => {
     fetchScores();
@@ -36,7 +52,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     };
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
-  const triggerConfetti = (element: Element, isTopThree: boolean) => {
+  const triggerConfetti = (element: Element, movedToTopThree: boolean) => {
     // Find the score text element within the container
     const scoreElement = element.querySelector('.score-value');
     const rect = (scoreElement || element).getBoundingClientRect();
@@ -45,16 +61,46 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     const x = (rect.left + rect.width / 2) / window.innerWidth;
     const y = (rect.top + rect.height / 2) / window.innerHeight;
     
-    confetti({
-      particleCount: isTopThree ? 100 : 50,
-      spread: isTopThree ? 70 : 50,
-      origin: { x, y },
-      colors: ['#FF0000', '#FF8800', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF'], // Rainbow colors
-      ticks: isTopThree ? 200 : 150,
-      startVelocity: isTopThree ? 30 : 20,
-      shapes: ['circle', 'square'],
-      scalar: isTopThree ? 0.75 : 0.5
-    });
+    // More dramatic celebration for moving into top 3
+    if (movedToTopThree) {
+      // First burst
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { x, y },
+        colors: ['#FFD700', '#FFA500', '#FF4500'], // Gold, orange, red
+        ticks: 200,
+        startVelocity: 30,
+        shapes: ['circle', 'square'],
+        scalar: 0.75
+      });
+      
+      // Second burst after a small delay
+      setTimeout(() => {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { x, y },
+          colors: ['#FFD700', '#FFA500', '#FF4500'],
+          ticks: 150,
+          startVelocity: 25,
+          shapes: ['circle', 'square'],
+          scalar: 0.5
+        });
+      }, 200);
+    } else {
+      // Simple celebration for regular position improvement
+      confetti({
+        particleCount: 30,
+        spread: 40,
+        origin: { x, y },
+        colors: ['#00FF00', '#4CAF50', '#2196F3'], // Green and blue tones
+        ticks: 100,
+        startVelocity: 15,
+        shapes: ['circle'],
+        scalar: 0.4
+      });
+    }
   };
 
   const updateScoresWithAnimation = (newScores: Score[]) => {
@@ -74,9 +120,20 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     // Find scores that genuinely improved their position
     const improvedScores = newScores.map((score, newIndex) => {
       const lastPosition = lastPositions.current.get(score.id);
-      // Only count as improved if we have a last position and it moved up
-      const hasImproved = lastPosition !== undefined && newIndex < lastPosition;
-      return { score, hasImproved };
+      // Only count as improved if:
+      // 1. We have a last position
+      // 2. The score moved up in rank
+      // 3. The score is not 0 (we don't celebrate groups with no score)
+      const hasImproved = lastPosition !== undefined && 
+                         newIndex < lastPosition && 
+                         score.score !== 0;
+      
+      // Track if it moved into top 3
+      const wasInTopThree = lastPosition !== undefined && lastPosition < 3;
+      const isNowInTopThree = newIndex < 3;
+      const movedIntoTopThree = !wasInTopThree && isNowInTopThree;
+      
+      return { score, hasImproved, movedIntoTopThree };
     }).filter(x => x.hasImproved);
 
     // Store new positions for next comparison
@@ -85,36 +142,48 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     });
 
     const triggerConfettiForImproved = () => {
-      improvedScores.forEach(({ score }) => {
+      improvedScores.forEach(({ score, movedIntoTopThree }) => {
         const element = document.querySelector(`[data-flip-id="score-${score.id}"]`);
         if (element) {
-          const isTopThree = newScores.indexOf(score) < 3;
-          triggerConfetti(element, isTopThree);
+          // More confetti for moving into top 3, less for regular position improvements
+          triggerConfetti(element, movedIntoTopThree);
         }
       });
     };
 
     // Wait for React to update
     requestAnimationFrame(() => {
+      if (!contextRef.current) return;
+
+      // Create a new timeline for this animation
+      const tl = gsap.timeline();
+
       if (isMovingBetweenSections) {
         // If teams are crossing sections, just update without animation
         // But still call Flip.from with 0 duration to ensure proper cleanup
-        Flip.from(state, {
-          duration: 0,
-          ease: "none",
-          absolute: true,
-          simple: true,
-          onComplete: triggerConfettiForImproved
-        });
+        tl.add(
+          Flip.from(state, {
+            duration: 0,
+            ease: "none",
+            absolute: true,
+            simple: true,
+            onComplete: triggerConfettiForImproved
+          })
+        );
       } else {
         // Normal FLIP animation for other cases
-        Flip.from(state, {
-          duration: 0.8,
-          ease: "power2.inOut",
-          absolute: true,
-          onComplete: triggerConfettiForImproved
-        });
+        tl.add(
+          Flip.from(state, {
+            duration: 0.8,
+            ease: "power2.inOut",
+            absolute: true,
+            onComplete: triggerConfettiForImproved
+          })
+        );
       }
+
+      // Add the timeline to the context
+      contextRef.current.add(() => tl);
     });
   };
 
@@ -162,7 +231,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   }
 
   return (
-    <div className=" flex flex-col justify-center items-center">
+    <div ref={containerRef} className="flex flex-col justify-center items-center">
    
 
 
