@@ -32,22 +32,38 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
   const updateScoresWithAnimation = (newScores: Score[]) => {
-    // Get the state before the update
+    // Always get the state first to ensure GSAP tracking is consistent
     const state = Flip.getState("[data-flip-id]");
-    
+
+    // Check if any team is moving between top 3 and rest
+    const isMovingBetweenSections = newScores.some((score, newIndex) => {
+      const oldIndex = scores.findIndex(s => s.id === score.id);
+      // Check if position changed from >3 to <=3 or vice versa
+      return (oldIndex >= 3 && newIndex < 3) || (oldIndex < 3 && newIndex >= 3);
+    });
+
     // Update the scores
     setScores(newScores);
-    
-    // Animate to the new positions
+
+    // Wait for React to update
     requestAnimationFrame(() => {
-      Flip.from(state, {
-        duration: 0.8,
-        ease: "power2.inOut",
-        absolute: true,
-        onComplete: () => {
-          // Animation completed
-        }
-      });
+      if (isMovingBetweenSections) {
+        // If teams are crossing sections, just update without animation
+        // But still call Flip.from with 0 duration to ensure proper cleanup
+        Flip.from(state, {
+          duration: 0,
+          ease: "none",
+          absolute: true,
+          simple: true
+        });
+      } else {
+        // Normal FLIP animation for other cases
+        Flip.from(state, {
+          duration: 0.8,
+          ease: "power2.inOut",
+          absolute: true
+        });
+      }
     });
   };
 
@@ -103,8 +119,8 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
    
 
 
-      <div className="grid grid-cols-12 gap-8 border-t border-white/20 w-full h-[90vh]">
-      <h1 className="text-white/60 text-4xl font-bold w-full col-span-12 pt-8">KTH x UMAIN</h1>
+      <div className="grid grid-cols-12 gap-8  border-white/20 w-full h-[90vh]">
+      <h1 className="text-white/60 text-4xl font-bold w-full col-span-12 pt-8">KTH x UMAIN Leaderboard</h1>
 
         {/* Top 3 Scores */}
         <div className="col-span-8 flex flex-col">
