@@ -35,10 +35,31 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
     }
   };
 
-  const startEdit = (score: Score) => {
-    setEditingId(score.id);
-    setEditName(score.name);
-    setEditScore(score.score);
+  const startEdit = async (score: Score) => {
+    try {
+      // Fetch latest scores before starting edit
+      const response = await fetch('/api/scores');
+      const data = await response.json();
+      
+      if (data.success) {
+        // Find the latest version of this score
+        const latestScore = data.scores.find((s: Score) => s.id === score.id);
+        if (latestScore) {
+          setEditingId(latestScore.id);
+          setEditName(latestScore.name);
+          setEditScore(latestScore.score);
+        } else {
+          // Score was deleted
+          setMessage({ text: 'This score no longer exists', type: 'error' });
+          fetchScores(); // Refresh the list
+        }
+      } else {
+        setMessage({ text: 'Failed to get latest score data', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error fetching latest score:', error);
+      setMessage({ text: 'Failed to start editing - please try again', type: 'error' });
+    }
   };
 
   const saveEdit = async () => {
@@ -218,7 +239,7 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
                     ) : (
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => startEdit(score)}
+                          onClick={async () => await startEdit(score)}
                           className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
                         >
                           ✏️ Edit
