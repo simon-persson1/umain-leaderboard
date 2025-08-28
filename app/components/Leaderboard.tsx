@@ -5,6 +5,7 @@ import { Score } from '@/app/types/leaderboard';
 import AnimatedScore from './AnimatedScore';
 import gsap from 'gsap';
 import { Flip } from 'gsap/Flip';
+import confetti from 'canvas-confetti';
 
 gsap.registerPlugin(Flip);
 
@@ -16,6 +17,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   const [scores, setScores] = useState<Score[]>([]);
   const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastPositions = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     fetchScores();
@@ -31,6 +33,27 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     };
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
+  const triggerConfetti = (element: Element, isTopThree: boolean) => {
+    // Find the score text element within the container
+    const scoreElement = element.querySelector('.score-value');
+    const rect = (scoreElement || element).getBoundingClientRect();
+    
+    // Calculate position from the center of the score text
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    
+    confetti({
+      particleCount: isTopThree ? 100 : 50,
+      spread: isTopThree ? 70 : 50,
+      origin: { x, y },
+      colors: ['#FF0000', '#FF8800', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF'], // Rainbow colors
+      ticks: isTopThree ? 200 : 150,
+      startVelocity: isTopThree ? 30 : 20,
+      shapes: ['circle', 'square'],
+      scalar: isTopThree ? 0.75 : 0.5
+    });
+  };
+
   const updateScoresWithAnimation = (newScores: Score[]) => {
     // Always get the state first to ensure GSAP tracking is consistent
     const state = Flip.getState("[data-flip-id]");
@@ -45,6 +68,29 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     // Update the scores
     setScores(newScores);
 
+    // Find scores that genuinely improved their position
+    const improvedScores = newScores.map((score, newIndex) => {
+      const lastPosition = lastPositions.current.get(score.id);
+      // Only count as improved if we have a last position and it moved up
+      const hasImproved = lastPosition !== undefined && newIndex < lastPosition;
+      return { score, hasImproved };
+    }).filter(x => x.hasImproved);
+
+    // Store new positions for next comparison
+    newScores.forEach((score, index) => {
+      lastPositions.current.set(score.id, index);
+    });
+
+    const triggerConfettiForImproved = () => {
+      improvedScores.forEach(({ score }) => {
+        const element = document.querySelector(`[data-flip-id="score-${score.id}"]`);
+        if (element) {
+          const isTopThree = newScores.indexOf(score) < 3;
+          triggerConfetti(element, isTopThree);
+        }
+      });
+    };
+
     // Wait for React to update
     requestAnimationFrame(() => {
       if (isMovingBetweenSections) {
@@ -54,14 +100,16 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
           duration: 0,
           ease: "none",
           absolute: true,
-          simple: true
+          simple: true,
+          onComplete: triggerConfettiForImproved
         });
       } else {
         // Normal FLIP animation for other cases
         Flip.from(state, {
           duration: 0.8,
           ease: "power2.inOut",
-          absolute: true
+          absolute: true,
+          onComplete: triggerConfettiForImproved
         });
       }
     });
@@ -130,7 +178,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
               <div className="flex items-end">
                 <AnimatedScore 
                   value={score.score} 
-                  className="text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none"
+                  className="score-value text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none"
                   duration={1.5}
                 />
                 <span className="text-[18px] font-bold uppercase text-white mb-4">pts</span>
@@ -148,7 +196,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
                 <div className="flex items-end gap-2">
                                       <AnimatedScore 
                       value={score.score}
-                      className="text-[32px] font-bold text-white leading-none"
+                      className="score-value text-[32px] font-bold text-white leading-none"
                       duration={1.5}
                     />
                   <span className="text-[12px] font-bold uppercase text-white">pts</span>
