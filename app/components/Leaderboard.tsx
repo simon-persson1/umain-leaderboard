@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Score } from '@/app/types/leaderboard';
+import AnimatedScore from './AnimatedScore';
 
 interface LeaderboardProps {
   refreshKey?: number;
@@ -9,7 +10,6 @@ interface LeaderboardProps {
 
 export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   const [scores, setScores] = useState<Score[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -17,7 +17,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     
     // Auto-refresh every 3 seconds
     const interval = setInterval(() => {
-      fetchScores(false); // Don't show loading spinner on auto-refresh
+      fetchScores();
     }, 3000);
     
     // Cleanup interval on component unmount
@@ -26,9 +26,8 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     };
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
-  const fetchScores = async (showLoading = true) => {
+  const fetchScores = async () => {
     try {
-      if (showLoading) setLoading(true);
       setError(null);
       
       const response = await fetch('/api/scores');
@@ -42,18 +41,8 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     } catch (err) {
       setError('Failed to fetch scores');
       console.error('Error fetching scores:', err);
-    } finally {
-      setLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -98,7 +87,11 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
             <div className="flex flex-col py-8" key={score.id}>
               <span className="text-[24px] font-bold uppercase text-white/60">{score.name}</span>
               <div className="flex items-end">
-                <div className="text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none">{score.score.toString()}</div>
+                <AnimatedScore 
+                  value={score.score} 
+                  className="text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none"
+                  duration={1.5}
+                />
                 <span className="text-[18px] font-bold uppercase text-white mb-4">pts</span>
               </div>
             </div>
@@ -112,7 +105,11 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
               <div className="flex flex-col" key={score.id}>
                 <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
                 <div className="flex items-end gap-2">
-                  <div className="text-[32px] font-bold text-white leading-none">{score.score.toString()}</div>
+                                      <AnimatedScore 
+                      value={score.score}
+                      className="text-[32px] font-bold text-white leading-none"
+                      duration={1.5}
+                    />
                   <span className="text-[12px] font-bold uppercase text-white">pts</span>
                 </div>
               </div>
