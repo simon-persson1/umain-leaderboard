@@ -95,27 +95,25 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
         {/* Top 3 Scores */}
         <div className="col-span-8 flex flex-col">
           {scores.slice(0, 3).map((score, index) => (
-            <div className="flex justify-start items-start py-8" key={score.id}>
-              <div className="text-[150px] uppercase font-bold text-white leading-none">{score.score.toLocaleString()}</div>  
-               <span className="text-[18px] font-bold uppercase text-white/60">pts</span>
-              <div className="mt-7">
-                <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
-            
+            <div className="flex flex-col py-8" key={score.id}>
+              <span className="text-[24px] font-bold uppercase text-white/60">{score.name}</span>
+              <div className="flex items-end">
+                <div className="text-[clamp(50px,15vw,150px)] uppercase font-bold text-white leading-none">{score.score.toString()}</div>
+                <span className="text-[18px] font-bold uppercase text-white mb-4">pts</span>
               </div>
             </div>
           ))}
         </div>
 
         {/* Rest of the Scores */}
-        <div className="col-span-4 pl-8">
-          <div className="flex flex-col gap-6 pt-8">
+        <div className="col-span-4">
+          <div className="flex flex-col gap-10 pt-8">
             {scores.slice(3).map((score, index) => (
-              <div className="flex items-center gap-4" key={score.id}>
-                <div className="text-[32px] font-bold text-white leading-none">{score.score.toLocaleString()}</div>
-                <span className="text-[32px] font-bold uppercase text-white">pts</span>
-                <div>
-                  <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
-              
+              <div className="flex flex-col" key={score.id}>
+                <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
+                <div className="flex items-end gap-2">
+                  <div className="text-[32px] font-bold text-white leading-none">{score.score.toString()}</div>
+                  <span className="text-[12px] font-bold uppercase text-white">pts</span>
                 </div>
               </div>
             ))}
