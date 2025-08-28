@@ -76,6 +76,31 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
     setEditScore(0);
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this score? This cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/scores?id=${id}`, { method: 'DELETE' });
+      const data = await response.json();
+
+      if (data.success) {
+        setMessage({ text: 'Score deleted successfully!', type: 'success' });
+        fetchScores();
+        
+        // Notify parent component that scores changed
+        if (onScoresChanged) {
+          onScoresChanged();
+        }
+      } else {
+        setMessage({ text: data.message, type: 'error' });
+      }
+    } catch (error) {
+      setMessage({ text: 'Failed to delete score', type: 'error' });
+    }
+  };
+
   const clearAll = async () => {
     if (!confirm('Are you sure you want to clear all scores? This cannot be undone.')) {
       return;
@@ -191,12 +216,20 @@ export default function ScoreManager({ onScoresChanged }: ScoreManagerProps) {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => startEdit(score)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
-                      >
-                        ✏️ Edit
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => startEdit(score)}
+                          className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(score.id)}
+                          className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

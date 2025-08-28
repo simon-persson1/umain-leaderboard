@@ -152,15 +152,11 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
 
   if (scores.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-600 text-lg mb-4">
+      <div className="text-center flex flex-col justify-center items-center h-screen">
+        <div className="text-white text-[200px]">
+          KTH x UMAIN
         </div>
-        <a
-          href="/admin"
-          className="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Add Your Score
-        </a>
+       
       </div>
     );
   }

@@ -160,20 +160,39 @@ export async function POST(request: NextRequest): Promise<NextResponse<AddScoreR
   }
 }
 
-// DELETE /api/scores - Clear all scores
-export async function DELETE(): Promise<NextResponse<{ success: boolean; message: string }>> {
+// DELETE /api/scores - Clear all scores or delete specific score
+export async function DELETE(request: NextRequest): Promise<NextResponse<{ success: boolean; message: string }>> {
   try {
-    await clearAllScores();
-    
-    return NextResponse.json({
-      success: true,
-      message: 'All scores cleared successfully!'
-    });
+    // Check if we have a specific score ID to delete
+    const { searchParams } = new URL(request.url);
+    const scoreId = searchParams.get('id');
+
+    if (scoreId) {
+      // Delete specific score
+      const deleted = await deleteScore(scoreId);
+      if (!deleted) {
+        return NextResponse.json({
+          success: false,
+          message: 'Score not found'
+        }, { status: 404 });
+      }
+      return NextResponse.json({
+        success: true,
+        message: 'Score deleted successfully!'
+      });
+    } else {
+      // Clear all scores
+      await clearAllScores();
+      return NextResponse.json({
+        success: true,
+        message: 'All scores cleared successfully!'
+      });
+    }
   } catch (error) {
-    console.error('Error clearing scores:', error);
+    console.error('Error with score deletion:', error);
     return NextResponse.json({
       success: false,
-      message: 'Failed to clear scores. Please try again.'
+      message: 'Failed to delete score(s). Please try again.'
     }, { status: 500 });
   }
 }
