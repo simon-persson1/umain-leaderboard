@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Score } from '@/app/types/leaderboard';
 import AnimatedScore from './AnimatedScore';
+import gsap from 'gsap';
+import { Flip } from 'gsap/Flip';
+
+gsap.registerPlugin(Flip);
 
 interface LeaderboardProps {
   refreshKey?: number;
@@ -11,6 +15,7 @@ interface LeaderboardProps {
 export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
   const [scores, setScores] = useState<Score[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchScores();
@@ -26,6 +31,26 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
     };
   }, [refreshKey]); // Re-fetch when refreshKey changes
 
+  const updateScoresWithAnimation = (newScores: Score[]) => {
+    // Get the state before the update
+    const state = Flip.getState("[data-flip-id]");
+    
+    // Update the scores
+    setScores(newScores);
+    
+    // Animate to the new positions
+    requestAnimationFrame(() => {
+      Flip.from(state, {
+        duration: 0.8,
+        ease: "power2.inOut",
+        absolute: true,
+        onComplete: () => {
+          // Animation completed
+        }
+      });
+    });
+  };
+
   const fetchScores = async () => {
     try {
       setError(null);
@@ -34,7 +59,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
       const data = await response.json();
       
       if (data.success) {
-        setScores(data.scores);
+        updateScoresWithAnimation(data.scores);
       } else {
         setError('Failed to fetch scores');
       }
@@ -84,7 +109,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
         {/* Top 3 Scores */}
         <div className="col-span-8 flex flex-col">
           {scores.slice(0, 3).map((score, index) => (
-            <div className="flex flex-col py-8" key={score.id}>
+            <div className="flex flex-col py-8" key={score.id} data-flip-id={`score-${score.id}`}>
               <span className="text-[24px] font-bold uppercase text-white/60">{score.name}</span>
               <div className="flex items-end">
                 <AnimatedScore 
@@ -102,7 +127,7 @@ export default function Leaderboard({ refreshKey = 0 }: LeaderboardProps) {
         <div className="col-span-4">
           <div className="flex flex-col gap-10 pt-8">
             {scores.slice(3).map((score, index) => (
-              <div className="flex flex-col" key={score.id}>
+              <div className="flex flex-col" key={score.id} data-flip-id={`score-${score.id}`}>
                 <span className="text-[18px] font-bold uppercase text-white/60">{score.name}</span>
                 <div className="flex items-end gap-2">
                                       <AnimatedScore 
